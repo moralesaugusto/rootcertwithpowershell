@@ -1,0 +1,48 @@
+#This script installs SSL 
+#Remote SSL installation v0.1 Augusto Morales
+
+$FLAGDOWNLOAD = 0
+$FLAGINSTALL = 0
+$URL_PATH = "http://192.168.1.2:8000/ca.crt"
+$CERT_LOCATION = "$env:public\firewallssl.cer"
+$DONOTDELETE_FILE = "DONOTDELETE_CERT_OK.txt"
+$FLAGLOCATION = $env:public
+$FLAGNAME = "DONOTDELETE_CERT_OK.txt"
+
+
+Try
+{
+    Invoke-WebRequest -Uri $URL_PATH -OutFile $CERT_LOCATION
+    $FLAGDOWNLOAD = 1
+
+    Import-Certificate -FilePath $CERT_LOCATION -CertStoreLocation Cert:\LocalMachine\Root
+    $FLAGINSTALL = 1
+}
+
+Catch [System.Net.WebException] { 
+    $ErrorMessage = $_.Exception.Message
+    Write-Warning "Error downloading file: " $ErrorMessage
+    Break
+    
+}
+Catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Warning "Generic Error" $ErrorMessage
+    Break
+}
+Finally{
+    if ($FLAGDOWNLOAD -eq 1 -and $FLAGINSTALL -eq 1){
+
+        try{
+            New-Item -Path $FLAGLOCATION -Name $FLAGNAME -Force
+            Write-Warning "Script executed 100%! Good Job :)!"
+        }Catch{
+            Write-Warning "Certificated installed but problem creating flag file"
+
+        }
+   
+    }
+    else{
+        Write-Warning "Problem...certificate not installed!"
+}
+}
